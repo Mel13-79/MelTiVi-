@@ -1,0 +1,6 @@
+{
+  "name": "MelTiVi",
+  "description": "Личный IPTV-плеер для смартфонов и Android TV с поддержкой плейлистов M3U и потоков HLS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

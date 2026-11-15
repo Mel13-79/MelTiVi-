@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MelTiVi</string>
+    <string name="splash_subtitle">Личный IPTV-плеер</string>
+
+    <!-- Навигация -->
+    <string name="nav_channels">Каналы</string>
+    <string name="nav_guide">Телегид</string>
+    <string name="nav_favorites">Избранное</string>
+    <string name="nav_playlists">Плейлисты</string>
+    <string name="nav_search">Поиск</string>
+
+    <!-- Плейлисты -->
+    <string name="playlists_title">Плейлисты</string>
+    <string name="playlists_add_button">Добавить</string>
+    <string name="playlists_add_first_button">Добавить плейлист</string>
+    <string name="playlists_empty_title">Плейлистов пока нет</string>
+    <string name="playlists_empty_subtitle">Добавьте ссылку на файл M3U или M3U8, чтобы загрузить список телеканалов</string>
+    <string name="playlists_active_badge">Активен</string>
+    <string name="playlists_channels_count">%1$d кан.</string>
+    <string name="playlists_updated_at">Обновлён: %1$s</string>
+    <string name="playlists_epg_configured">Телегид подключён</string>
+    <string name="playlists_epg_not_configured">Телегид не настроен</string>
+    <string name="playlists_epg_updated_at">Телегид: %1$s</string>
+    <string name="playlists_refresh_action">Обновить</string>
+    <string name="playlists_settings_action">Настройки</string>
+    <string name="playlists_delete_action">Удалить</string>
+    <string name="playlists_select_action">Открыть</string>
+    <string name="playlists_loading">Загрузка плейлиста…</string>
+    <string name="playlists_refreshing">Обновление плейлиста…</string>
+    <string name="playlists_loaded_toast">Загружено каналов: %1$d</string>
+
+    <!-- Диалог добавления и настроек плейлиста -->
+    <string name="dialog_add_playlist_title">Новый плейлист</string>
+    <string name="dialog_playlist_settings_title">Настройки плейлиста</string>
+    <string name="dialog_playlist_name_label">Название (необязательно)</string>
+    <string name="dialog_playlist_name_hint">Например: Домашний ТВ</string>
+    <string name="dialog_playlist_url_label">Ссылка на M3U-плейлист</string>
+    <string name="dialog_playlist_url_hint">https://example.com/playlist.m3u8</string>
+    <string name="dialog_epg_url_label">Ссылка на телегид XMLTV (необязательно)</string>
+    <string name="dialog_epg_url_hint">https://example.com/epg.xml.gz</string>
+    <string name="dialog_cancel">Отмена</string>
+    <string name="dialog_save">Загрузить</string>
+    <string name="dialog_save_settings">Сохранить</string>
+    <string name="dialog_save_and_load_epg">Сохранить и обновить EPG</string>
+    <string name="dialog_delete_title">Удалить плейлист?</string>
+    <string name="dialog_delete_message">Плейлист «%1$s» и все его каналы будут удалены с устройства.</string>
+    <string name="dialog_delete_confirm">Удалить</string>
+
+    <!-- Каналы -->
+    <string name="channels_title">Телеканалы</string>
+    <string name="channels_favorites_title">Избранные каналы</string>
+    <string name="channels_all_groups">Все группы</string>
+    <string name="channels_ungrouped">Без категории</string>
+    <string name="channels_search_hint">Поиск по названию канала…</string>
+    <string name="channels_search_clear">Очистить поиск</string>
+    <string name="channels_empty_title">Список каналов пуст</string>
+    <string name="channels_empty_subtitle">Выберите или добавьте плейлист во вкладке «Плейлисты»</string>
+    <string name="channels_search_empty">По запросу «%1$s» ничего не найдено</string>
+    <string name="channels_favorites_empty_title">В избранном пока пусто</string>
+    <string name="channels_favorites_empty_subtitle">Отмечайте любимые каналы звёздочкой для быстрого доступа</string>
+    <string name="channels_add_favorite">Добавить в избранное</string>
+    <string name="channels_remove_favorite">Убрать из избранного</string>
+    <string name="channels_last_watched_badge">Недавний</string>
+    <string name="channels_continue_watching">Продолжить: %1$s</string>
+    <string name="channels_watch_action">Смотреть</string>
+    <string name="channels_tv_ok_hint">Нажмите OK для запуска • Меню или «Влево» для разделов</string>
+    <string name="channels_switch_playlist">Сменить плейлист</string>
+    <string name="channels_view_rows">Ряды</string>
+    <string name="channels_view_grid">Сетка</string>
+    <string name="channels_now_playing">Сейчас: %1$s</string>
+    <string name="channels_next_playing">Далее (%1$s): %2$s</string>
+
+    <!-- Телегид (EPG) -->
+    <string name="guide_title">Телегид</string>
+    <string name="guide_refresh_button">Обновить</string>
+    <string name="guide_now_button">Сейчас</string>
+    <string name="guide_loading">Загрузка телегида (XMLTV)…</string>
+    <string name="guide_loaded_toast">Загружено передач: %1$d</string>
+    <string name="guide_no_playlist_title">Сначала выберите плейлист</string>
+    <string name="guide_no_playlist_subtitle">Добавьте или выберите плейлист во вкладке «Плейлисты», чтобы открыть телегид</string>
+    <string name="guide_no_url_title">Ссылка на телегид не указана</string>
+    <string name="guide_no_url_subtitle">Укажите адрес XMLTV-файла (.xml или .xml.gz) в настройках плейлиста «%1$s»</string>
+    <string name="guide_configure_url_button">Указать ссылку XMLTV</string>
+    <string name="guide_empty_programs_title">Программа передач не загружена</string>
+    <string name="guide_empty_programs_subtitle">Нажмите «Обновить», чтобы скачать и кэшировать телегид для каналов плейлиста</string>
+    <string name="guide_no_programs_for_channel">Нет программы передач</string>
+    <string name="guide_status_live">Идёт сейчас</string>
+    <string name="guide_status_upcoming">Скоро</string>
+    <string name="guide_status_finished">Завершена</string>
+    <string name="guide_program_time_range">%1$s – %2$s</string>
+    <string name="guide_program_no_description">Описание передачи отсутствует.</string>
+    <string name="guide_close">Закрыть</string>
+
+    <!-- Плеер -->
+    <string name="player_back">Назад к каналам</string>
+    <string name="player_live_badge">ЭФИР</string>
+    <string name="player_buffering">Подключение к потоку…</string>
+    <string name="player_prev_channel">Предыдущий канал</string>
+    <string name="player_next_channel">Следующий канал</string>
+    <string name="player_play_pause">Воспроизведение или пауза</string>
+    <string name="player_aspect_mode">Масштаб экрана</string>
+    <string name="player_aspect_fit">По экрану</string>
+    <string name="player_aspect_fill">Заполнить</string>
+    <string name="player_aspect_zoom">16:9</string>
+    <string name="player_retry">Повторить</string>
+    <string name="player_error_title">Не удалось воспроизвести канал</string>
+    <string name="player_error_network">Проверьте подключение к интернету или доступность потока.</string>
+    <string name="player_error_format">Формат видеопотока не поддерживается или ссылка устарела.</string>
+    <string name="player_tv_controls_hint">▲ ▼ Переключить канал • OK Пауза/Меню • Назад К списку</string>
+
+    <!-- Ошибки загрузки и парсинга -->
+    <string name="error_empty_url">Введите ссылку на M3U-плейлист.</string>
+    <string name="error_invalid_url">Некорректный адрес ссылки. Ссылка должна начинаться с http:// или https://</string>
+    <string name="error_network_playlist">Не удалось загрузить плейлист. Проверьте интернет или ссылку.</string>
+    <string name="error_http_playlist">Сервер вернул ошибку (%1$d). Проверьте актуальность ссылки.</string>
+    <string name="error_empty_playlist">В файле плейлиста не найдено ни одного канала.</string>
+    <string name="error_timeout_playlist">Превышено время ожидания ответа от сервера. Попробуйте позже.</string>
+    <string name="error_empty_epg_url">Укажите ссылку на XMLTV-файл (.xml или .xml.gz) в настройках плейлиста.</string>
+    <string name="error_network_epg">Не удалось загрузить телегид. Проверьте интернет или ссылку XMLTV.</string>
+    <string name="error_http_epg">Сервер телегида вернул ошибку (%1$d). Проверьте ссылку XMLTV.</string>
+    <string name="error_empty_epg">В XMLTV-файле не найдено совпадений с каналами текущего плейлиста.</string>
+    <string name="error_parse_epg">Не удалось разобрать файл телегида. Убедитесь, что это корректный XMLTV (.xml или .xml.gz).</string>
+</resources>
