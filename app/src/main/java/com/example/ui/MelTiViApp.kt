@@ -133,6 +133,7 @@ fun MelTiViApp(
     val isAddingPlaylist by viewModel.isAddingPlaylist.collectAsStateWithLifecycle()
     val refreshingPlaylistId by viewModel.refreshingPlaylistId.collectAsStateWithLifecycle()
     val isRefreshingEpg by viewModel.isRefreshingEpg.collectAsStateWithLifecycle()
+    val epgLoadProgress by viewModel.epgLoadProgress.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val infoMessage by viewModel.infoMessage.collectAsStateWithLifecycle()
     val currentPlayingChannel by viewModel.currentPlayingChannel.collectAsStateWithLifecycle()
@@ -227,6 +228,7 @@ fun MelTiViApp(
                                 epgProgramsByChannel = epgProgramsByChannel,
                                 currentTimeMs = currentTimeMs,
                                 isRefreshingEpg = isRefreshingEpg,
+                                epgLoadProgress = epgLoadProgress,
                                 onRefreshEpg = { viewModel.refreshEpg() },
                                 onOpenPlaylistSettings = { playlist ->
                                     settingsTargetPlaylist = playlist

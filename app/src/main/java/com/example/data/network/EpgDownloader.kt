@@ -2,7 +2,7 @@ package com.example.data.network
 
 import android.content.Context
 import com.example.R
-import com.example.data.parser.ParsedXmltvData
+import com.example.data.parser.ParsedEpgProgram
 import com.example.data.parser.XmltvParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -10,6 +10,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.BufferedInputStream
 import java.io.IOException
+import java.io.InputStream
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -36,7 +37,11 @@ class EpgDownloader(
         .followSslRedirects(true)
         .build()
 
-    suspend fun downloadAndParse(rawUrl: String): ParsedXmltvData = withContext(Dispatchers.IO) {
+    suspend fun downloadAndParse(
+        rawUrl: String,
+        onProgress: ((bytesRead: Long, totalBytes: Long) -> Unit)? = null,
+        onBatch: suspend (batch: List<ParsedEpgProgram>, channelDisplayNames: Map<String, List<String>>) -> Unit
+    ): Map<String, List<String>> = withContext(Dispatchers.IO) {
         val url = rawUrl.trim()
         if (url.isEmpty()) {
             throw EpgLoadException(context.getString(R.string.error_empty_epg_url))
@@ -66,6 +71,7 @@ class EpgDownloader(
                 val body = response.body
                     ?: throw EpgLoadException(context.getString(R.string.error_network_epg))
 
+                val contentLength = body.contentLength()
                 val contentType = response.header("Content-Type").orEmpty()
                 val buffered = BufferedInputStream(body.byteStream(), 16 * 1024)
                 buffered.mark(4)
@@ -78,14 +84,22 @@ class EpgDownloader(
                     lower.endsWith(".gz") ||
                     contentType.contains("gzip", ignoreCase = true)
 
-                val stream = if (isGzip) {
-                    GZIPInputStream(buffered)
+                // Обёртка с подсчётом прочитанных байт (для отображения прогресса загрузки).
+                val source: InputStream = if (onProgress != null) {
+                    ProgressInputStream(buffered, contentLength, onProgress)
                 } else {
                     buffered
                 }
 
+                // Для gzip считаем сжатые байты из недр GZIPInputStream, поэтому обёртка стоит под ним.
+                val stream = if (isGzip) {
+                    GZIPInputStream(source)
+                } else {
+                    source
+                }
+
                 stream.use { xmlStream ->
-                    parser.parse(xmlStream)
+                    parser.parseStreaming(xmlStream, onBatch = onBatch)
                 }
             }
         } catch (e: EpgLoadException) {

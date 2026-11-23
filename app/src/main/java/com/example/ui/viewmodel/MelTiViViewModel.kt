@@ -50,6 +50,23 @@ data class ChannelNowNext(
 )
 
 /**
+ * Прогресс загрузки телегида (EPG): прочитано байт из общего количества.
+ * Если [totalBytes] не определён (<= 0), прогресс считается неопределённым.
+ */
+data class EpgLoadProgress(
+    val bytesRead: Long,
+    val totalBytes: Long
+) {
+    val isIndeterminate: Boolean get() = totalBytes <= 0L
+    val fraction: Float
+        get() = if (totalBytes > 0L) {
+            (bytesRead.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+}
+
+/**
  * Общий ViewModel для телефонного и ТВ-интерфейсов (PhoneUi / TvUi).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -240,6 +257,9 @@ class MelTiViViewModel(application: Application) : AndroidViewModel(application)
     private val _isRefreshingEpg = MutableStateFlow(false)
     val isRefreshingEpg: StateFlow<Boolean> = _isRefreshingEpg.asStateFlow()
 
+    private val _epgLoadProgress = MutableStateFlow<EpgLoadProgress?>(null)
+    val epgLoadProgress: StateFlow<EpgLoadProgress?> = _epgLoadProgress.asStateFlow()
+
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
@@ -358,8 +378,11 @@ class MelTiViViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             _isRefreshingEpg.value = true
             _errorMessage.value = null
+            _epgLoadProgress.value = EpgLoadProgress(0L, 0L)
             try {
-                val count = repository.refreshEpg(targetId)
+                val count = repository.refreshEpg(targetId) { read, total ->
+                    _epgLoadProgress.value = EpgLoadProgress(read, total)
+                }
                 _infoMessage.value = getApplication<Application>()
                     .getString(R.string.guide_loaded_toast, count)
             } catch (e: EpgLoadException) {
@@ -369,6 +392,7 @@ class MelTiViViewModel(application: Application) : AndroidViewModel(application)
                     .getString(R.string.error_network_epg)
             } finally {
                 _isRefreshingEpg.value = false
+                _epgLoadProgress.value = null
             }
         }
     }

@@ -14,7 +14,6 @@ import com.example.data.network.EpgDownloader
 import com.example.data.network.EpgLoadException
 import com.example.data.network.PlaylistDownloader
 import com.example.data.parser.ParsedChannel
-import com.example.data.parser.XmltvParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -29,8 +28,7 @@ class IptvRepository(
     private val dao: MelTiViDao,
     private val downloader: PlaylistDownloader,
     private val epgDownloader: EpgDownloader,
-    private val preferences: PlaybackPreferences,
-    private val xmltvParser: XmltvParser = XmltvParser()
+    private val preferences: PlaybackPreferences
 ) {
 
     val playlists: Flow<List<PlaylistEntity>> = dao.observePlaylists()
@@ -160,39 +158,124 @@ class IptvRepository(
     /**
      * Скачивает XMLTV (.xml или .xml.gz) по URL из настроек плейлиста,
      * сопоставляет передачи по tvg-id или точному названию канала и кэширует в Room.
+     *
+     * Передачи разбираются потоково и сохраняются в Room батчами по мере загрузки,
+     * чтобы не удерживать весь телегид в памяти. [onProgress] сообщает прогресс загрузки
+     * (прочитано байт из общего количества).
      */
-    suspend fun refreshEpg(playlistId: Long): Int = withContext(Dispatchers.IO) {
+    suspend fun refreshEpg(
+        playlistId: Long,
+        onProgress: (bytesRead: Long, totalBytes: Long) -> Unit = { _, _ -> }
+    ): Int = withContext(Dispatchers.IO) {
         val playlist = dao.getPlaylistById(playlistId)
             ?: throw IllegalStateException("Плейлист не найден")
         val epgUrl = playlist.epgUrl?.trim()
             ?.takeIf { it.isNotEmpty() }
             ?: throw EpgLoadException(context.getString(R.string.error_empty_epg_url))
 
-        val xmltvData = epgDownloader.downloadAndParse(epgUrl)
         val channels = dao.getChannelsSync(playlistId)
-        val matchedPrograms = xmltvParser.matchProgramsToChannels(xmltvData, channels)
 
-        if (matchedPrograms.isEmpty()) {
+        // Резолвер строится один раз из соответствий каналов XMLTV (они предшествуют передачам).
+        var resolver: Map<String, List<Long>>? = null
+        var matchedCount = 0
+        var oldEpgDeleted = false
+
+        epgDownloader.downloadAndParse(
+            epgUrl,
+            onProgress = onProgress
+        ) { batch, channelDisplayNames ->
+            val channelResolver = resolver
+                ?: buildChannelResolver(channels, channelDisplayNames).also { resolver = it }
+
+            val entities = ArrayList<EpgProgramEntity>(batch.size)
+            for (prog in batch) {
+                val channelIds = channelResolver[prog.xmltvChannelId.trim().lowercase()] ?: continue
+                for (channelId in channelIds) {
+                    entities.add(
+                        EpgProgramEntity(
+                            playlistId = playlistId,
+                            channelId = channelId,
+                            title = prog.title,
+                            description = prog.description,
+                            category = prog.category,
+                            startTimeMs = prog.startTimeMs,
+                            endTimeMs = prog.endTimeMs
+                        )
+                    )
+                }
+            }
+
+            if (entities.isNotEmpty()) {
+                // Удаляем старый кэш EPG только когда появились первые совпадения,
+                // чтобы при пустом/ошибочном файле сохранить прежние данные.
+                if (!oldEpgDeleted) {
+                    dao.deleteEpgByPlaylist(playlistId)
+                    oldEpgDeleted = true
+                }
+                entities.chunked(500).forEach { chunk ->
+                    dao.insertEpgPrograms(chunk)
+                }
+                matchedCount += entities.size
+            }
+        }
+
+        if (matchedCount == 0) {
             throw EpgLoadException(context.getString(R.string.error_empty_epg))
         }
 
-        val entities = matchedPrograms.map { prog ->
-            EpgProgramEntity(
-                playlistId = playlistId,
-                channelId = prog.channelId,
-                title = prog.title,
-                description = prog.description,
-                category = prog.category,
-                startTimeMs = prog.startTimeMs,
-                endTimeMs = prog.endTimeMs
-            )
+        dao.updatePlaylistEpgTimestamp(playlistId, System.currentTimeMillis())
+        matchedCount
+    }
+
+    /**
+     * Строит карту «нормализованный xmltvChannelId -> список id каналов Room»
+     * для сопоставления передач потоково (по tvg-id, затем по точному названию канала).
+     */
+    private fun buildChannelResolver(
+        channels: List<ChannelEntity>,
+        channelDisplayNames: Map<String, List<String>>
+    ): Map<String, List<Long>> {
+        if (channels.isEmpty()) return emptyMap()
+
+        // Индексируем точные display-name -> список xmltvChannelId (без учёта регистра)
+        val xmltvIdsByDisplayName = HashMap<String, MutableList<String>>()
+        for ((xmltvId, names) in channelDisplayNames) {
+            for (displayName in names) {
+                val key = displayName.trim().lowercase()
+                if (key.isNotEmpty()) {
+                    xmltvIdsByDisplayName.getOrPut(key) { ArrayList(1) }
+                        .add(xmltvId.trim().lowercase())
+                }
+            }
         }
-        dao.replaceEpgForPlaylist(
-            playlistId = playlistId,
-            programs = entities,
-            updatedAt = System.currentTimeMillis()
-        )
-        entities.size
+
+        val resolver = HashMap<String, MutableList<Long>>()
+
+        for (channel in channels) {
+            val channelId = channel.id
+
+            // Шаг 1: сопоставление по tvg-id
+            val tvgIdKey = channel.tvgId?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }
+            if (tvgIdKey != null) {
+                resolver.getOrPut(tvgIdKey) { ArrayList(1) }.add(channelId)
+            }
+
+            // Шаг 2: если tvg-id не задан — сопоставляем по точному названию канала
+            val nameKey = channel.name.trim().lowercase()
+            if (nameKey.isNotEmpty()) {
+                val candidateIds = xmltvIdsByDisplayName[nameKey]
+                if (!candidateIds.isNullOrEmpty()) {
+                    for (candidateId in candidateIds) {
+                        resolver.getOrPut(candidateId) { ArrayList(1) }.add(channelId)
+                    }
+                } else {
+                    // Запасной вариант: некоторые генераторы XMLTV используют само название как channel id
+                    resolver.getOrPut(nameKey) { ArrayList(1) }.add(channelId)
+                }
+            }
+        }
+
+        return resolver
     }
 
     /**

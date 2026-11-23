@@ -65,6 +65,141 @@ class XmltvParser {
         return parseInternal(parser)
     }
 
+    /**
+     * Потоковый разбор XMLTV: передачи отдаются частями (батчами) через [onBatch]
+     * по мере чтения, чтобы не удерживать весь телегид в памяти. Возвращает карту
+     * соответствия «xmltvId -> список display-name».
+     *
+     * [channelDisplayNames] в [onBatch] содержит уже разобранные на текущий момент
+     * соответствия каналов (в валидном XMLTV элементы <channel> предшествуют <programme>).
+     */
+    suspend fun parseStreaming(
+        inputStream: InputStream,
+        batchSize: Int = DEFAULT_BATCH_SIZE,
+        onBatch: suspend (batch: List<ParsedEpgProgram>, channelDisplayNames: Map<String, List<String>>) -> Unit
+    ): Map<String, List<String>> {
+        val factory = XmlPullParserFactory.newInstance().apply {
+            isNamespaceAware = false
+        }
+        val parser = factory.newPullParser()
+        parser.setInput(inputStream, null)
+        return parseInternalStreaming(parser, batchSize, onBatch)
+    }
+
+    private suspend fun parseInternalStreaming(
+        parser: XmlPullParser,
+        batchSize: Int,
+        onBatch: suspend (batch: List<ParsedEpgProgram>, channelDisplayNames: Map<String, List<String>>) -> Unit
+    ): Map<String, List<String>> {
+        val channelNames = HashMap<String, MutableList<String>>()
+        val batch = ArrayList<ParsedEpgProgram>(batchSize)
+
+        var currentXmltvChannelId: String? = null
+        var inChannelTag = false
+
+        var inProgrammeTag = false
+        var progChannelId: String? = null
+        var progStartMs: Long? = null
+        var progStopMs: Long? = null
+        var progTitle: String? = null
+        var progDesc: String? = null
+        var progCategory: String? = null
+
+        var eventType = parser.eventType
+        while (eventType != XmlPullParser.END_DOCUMENT) {
+            when (eventType) {
+                XmlPullParser.START_TAG -> {
+                    when (parser.name.lowercase()) {
+                        "channel" -> {
+                            inChannelTag = true
+                            currentXmltvChannelId = parser.getAttributeValue(null, "id")?.trim()
+                        }
+                        "display-name" -> {
+                            if (inChannelTag && !currentXmltvChannelId.isNullOrBlank()) {
+                                val text = safeNextText(parser).trim()
+                                if (text.isNotEmpty()) {
+                                    channelNames.getOrPut(currentXmltvChannelId) { ArrayList(2) }
+                                        .add(text)
+                                }
+                            }
+                        }
+                        "programme" -> {
+                            inProgrammeTag = true
+                            progChannelId = parser.getAttributeValue(null, "channel")?.trim()
+                            progStartMs = parseXmltvTimestamp(parser.getAttributeValue(null, "start"))
+                            progStopMs = parseXmltvTimestamp(parser.getAttributeValue(null, "stop"))
+                            progTitle = null
+                            progDesc = null
+                            progCategory = null
+                        }
+                        "title" -> {
+                            if (inProgrammeTag && progTitle == null) {
+                                val text = safeNextText(parser).trim()
+                                if (text.isNotEmpty()) progTitle = text
+                            }
+                        }
+                        "desc" -> {
+                            if (inProgrammeTag && progDesc == null) {
+                                val text = safeNextText(parser).trim()
+                                if (text.isNotEmpty()) progDesc = text
+                            }
+                        }
+                        "category" -> {
+                            if (inProgrammeTag && progCategory == null) {
+                                val text = safeNextText(parser).trim()
+                                if (text.isNotEmpty()) progCategory = text
+                            }
+                        }
+                    }
+                }
+                XmlPullParser.END_TAG -> {
+                    when (parser.name.lowercase()) {
+                        "channel" -> {
+                            inChannelTag = false
+                            currentXmltvChannelId = null
+                        }
+                        "programme" -> {
+                            val chId = progChannelId
+                            val start = progStartMs
+                            val stop = progStopMs
+                            val title = progTitle
+                            if (!chId.isNullOrBlank() && start != null && !title.isNullOrBlank()) {
+                                val resolvedStop = if (stop != null && stop > start) {
+                                    stop
+                                } else {
+                                    start + 30 * 60 * 1000L
+                                }
+                                batch.add(
+                                    ParsedEpgProgram(
+                                        xmltvChannelId = chId,
+                                        title = title,
+                                        description = progDesc,
+                                        category = progCategory,
+                                        startTimeMs = start,
+                                        endTimeMs = resolvedStop
+                                    )
+                                )
+                                if (batch.size >= batchSize) {
+                                    onBatch(batch.toList(), channelNames)
+                                    batch.clear()
+                                }
+                            }
+                            inProgrammeTag = false
+                            progChannelId = null
+                        }
+                    }
+                }
+            }
+            eventType = parser.next()
+        }
+
+        if (batch.isNotEmpty()) {
+            onBatch(batch.toList(), channelNames)
+        }
+
+        return channelNames
+    }
+
     private fun parseInternal(parser: XmlPullParser): ParsedXmltvData {
         val channelNames = HashMap<String, MutableList<String>>()
         val programs = ArrayList<ParsedEpgProgram>()
@@ -260,6 +395,9 @@ class XmltvParser {
     }
 
     companion object {
+        /** Размер батча передач, отдаваемых через коллбэк при потоковом разборе. */
+        const val DEFAULT_BATCH_SIZE = 1000
+
         /**
          * Разбирает временную метку XMLTV (например, "20261114183000 +0300" или "20261114183000").
          */

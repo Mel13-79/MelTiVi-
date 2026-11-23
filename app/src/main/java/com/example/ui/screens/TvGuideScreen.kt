@@ -86,6 +86,7 @@ import com.example.ui.theme.WarmAmber
 import com.example.ui.theme.WarmOrange
 import com.example.ui.theme.WarmOrangeSoft
 import com.example.ui.util.RussianFormatters
+import com.example.ui.viewmodel.EpgLoadProgress
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.math.roundToInt
@@ -101,6 +102,7 @@ fun TvGuideScreen(
     epgProgramsByChannel: Map<Long, List<EpgProgramEntity>>,
     currentTimeMs: Long,
     isRefreshingEpg: Boolean,
+    epgLoadProgress: EpgLoadProgress?,
     onRefreshEpg: () -> Unit,
     onOpenPlaylistSettings: (PlaylistEntity) -> Unit,
     onNavigateToPlaylists: () -> Unit,
@@ -275,20 +277,10 @@ fun TvGuideScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         if (isRefreshingEpg && epgProgramsByChannel.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = WarmOrange)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(R.string.guide_loading),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = TextSecondary
-                    )
-                }
-            }
+            EpgLoadingState(
+                progress = epgLoadProgress,
+                modifier = Modifier.fillMaxSize()
+            )
         } else if (epgProgramsByChannel.isEmpty()) {
             GuideMessageState(
                 title = stringResource(R.string.guide_empty_programs_title),
@@ -855,6 +847,57 @@ fun ProgramDetailsDialog(
             }
         }
     )
+}
+
+@Composable
+private fun EpgLoadingState(
+    progress: EpgLoadProgress?,
+    modifier: Modifier = Modifier
+) {
+    val isIndeterminate = progress == null || progress.isIndeterminate
+    val fraction = progress?.fraction ?: 0f
+    val percent = (fraction * 100f).roundToInt()
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        ) {
+            if (isIndeterminate) {
+                LinearProgressIndicator(
+                    color = WarmOrange,
+                    trackColor = OutlineSubtle,
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                )
+            } else {
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    color = WarmOrange,
+                    trackColor = OutlineSubtle,
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = if (isIndeterminate) {
+                    stringResource(R.string.guide_loading)
+                } else {
+                    stringResource(R.string.guide_loading_percent, percent)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextSecondary
+            )
+        }
+    }
 }
 
 @Composable

@@ -76,6 +76,7 @@
     <string name="guide_refresh_button">Обновить</string>
     <string name="guide_now_button">Сейчас</string>
     <string name="guide_loading">Загрузка телегида (XMLTV)…</string>
+    <string name="guide_loading_percent">Загрузка телегида… %1$d%%</string>
     <string name="guide_loaded_toast">Загружено передач: %1$d</string>
     <string name="guide_no_playlist_title">Сначала выберите плейлист</string>
     <string name="guide_no_playlist_subtitle">Добавьте или выберите плейлист во вкладке «Плейлисты», чтобы открыть телегид</string>
