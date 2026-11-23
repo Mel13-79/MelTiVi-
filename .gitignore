@@ -16,3 +16,7 @@
 local.properties
 .env
 debug.keystore
+
+# Keystores
+*.keystore
+keystore-base64.txt
