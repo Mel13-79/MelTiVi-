@@ -31,8 +31,8 @@ interface MelTiViDao {
     @Update
     suspend fun updatePlaylist(playlist: PlaylistEntity)
 
-    @Query("UPDATE playlists SET name = :name, epg_url = :epgUrl WHERE id = :playlistId")
-    suspend fun updatePlaylistSettings(playlistId: Long, name: String, epgUrl: String?)
+    @Query("UPDATE playlists SET name = :name, url = :url, epg_url = :epgUrl WHERE id = :playlistId")
+    suspend fun updatePlaylistSettings(playlistId: Long, name: String, url: String, epgUrl: String?)
 
     @Query("UPDATE playlists SET epg_updated_at = :epgUpdatedAt WHERE id = :playlistId")
     suspend fun updatePlaylistEpgTimestamp(playlistId: Long, epgUpdatedAt: Long)

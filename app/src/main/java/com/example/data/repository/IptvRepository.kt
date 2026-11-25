@@ -140,18 +140,20 @@ class IptvRepository(
         }
 
     /**
-     * Сохраняет настройки плейлиста (название и ссылку на XMLTV-телегид).
+     * Сохраняет настройки плейлиста (название, ссылку M3U и ссылку на XMLTV-телегид).
      */
     suspend fun updatePlaylistSettings(
         playlistId: Long,
         name: String,
+        url: String,
         epgUrl: String?
     ) {
         withContext(Dispatchers.IO) {
             val existing = dao.getPlaylistById(playlistId) ?: return@withContext
             val resolvedName = name.trim().ifEmpty { existing.name }
+            val resolvedUrl = url.trim().ifEmpty { existing.url }
             val resolvedEpg = epgUrl?.trim()?.takeIf { it.isNotEmpty() }
-            dao.updatePlaylistSettings(playlistId, resolvedName, resolvedEpg)
+            dao.updatePlaylistSettings(playlistId, resolvedName, resolvedUrl, resolvedEpg)
         }
     }
 

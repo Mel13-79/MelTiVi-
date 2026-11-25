@@ -89,7 +89,7 @@ fun PlaylistsScreen(
     onAddPlaylist: (name: String, url: String, epgUrl: String?, onSuccess: () -> Unit) -> Unit,
     onSelectPlaylist: (Long) -> Unit,
     onRefreshPlaylist: (Long) -> Unit,
-    onUpdatePlaylistSettings: (playlistId: Long, name: String, epgUrl: String?, loadEpgNow: Boolean, onSuccess: () -> Unit) -> Unit,
+    onUpdatePlaylistSettings: (playlistId: Long, name: String, url: String, epgUrl: String?, loadEpgNow: Boolean, onSuccess: () -> Unit) -> Unit,
     onDeletePlaylist: (Long) -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier
@@ -247,8 +247,8 @@ fun PlaylistsScreen(
         PlaylistSettingsDialog(
             playlist = target,
             onDismiss = { playlistForSettings = null },
-            onSave = { newName, newEpgUrl, loadEpgNow ->
-                onUpdatePlaylistSettings(target.id, newName, newEpgUrl, loadEpgNow) {
+            onSave = { newName, newUrl, newEpgUrl, loadEpgNow ->
+                onUpdatePlaylistSettings(target.id, newName, newUrl, newEpgUrl, loadEpgNow) {
                     playlistForSettings = null
                 }
             }

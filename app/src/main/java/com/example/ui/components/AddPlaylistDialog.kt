@@ -221,9 +221,10 @@ fun AddPlaylistDialog(
 fun PlaylistSettingsDialog(
     playlist: PlaylistEntity,
     onDismiss: () -> Unit,
-    onSave: (name: String, epgUrl: String?, loadEpgNow: Boolean) -> Unit
+    onSave: (name: String, url: String, epgUrl: String?, loadEpgNow: Boolean) -> Unit
 ) {
     var name by rememberSaveable(playlist.id) { mutableStateOf(playlist.name) }
+    var url by rememberSaveable(playlist.id) { mutableStateOf(playlist.url.orEmpty()) }
     var epgUrl by rememberSaveable(playlist.id) { mutableStateOf(playlist.epgUrl.orEmpty()) }
     val epgFocusRequester = remember { FocusRequester() }
 
@@ -268,6 +269,28 @@ fun PlaylistSettingsDialog(
                 )
 
                 OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Link,
+                            contentDescription = null,
+                            tint = WarmOrange
+                        )
+                    },
+                    label = { Text(stringResource(R.string.dialog_playlist_url_label)) },
+                    placeholder = { Text(stringResource(R.string.dialog_playlist_url_hint)) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("settings_playlist_url_input")
+                )
+
+                OutlinedTextField(
                     value = epgUrl,
                     onValueChange = { epgUrl = it },
                     singleLine = true,
@@ -286,7 +309,7 @@ fun PlaylistSettingsDialog(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
-                            onSave(name, epgUrl.ifBlank { null }, epgUrl.isNotBlank())
+                            onSave(name, url, epgUrl.ifBlank { null }, epgUrl.isNotBlank())
                         }
                     ),
                     modifier = Modifier
@@ -300,7 +323,7 @@ fun PlaylistSettingsDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (epgUrl.isNotBlank()) {
                     Button(
-                        onClick = { onSave(name, epgUrl.trim(), true) },
+                        onClick = { onSave(name, url, epgUrl.trim(), true) },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = WarmOrange,
                             contentColor = ObsidianBg
@@ -311,7 +334,7 @@ fun PlaylistSettingsDialog(
                     }
                 } else {
                     Button(
-                        onClick = { onSave(name, null, false) },
+                        onClick = { onSave(name, url, null, false) },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = WarmOrange,
                             contentColor = ObsidianBg

@@ -345,12 +345,13 @@ class MelTiViViewModel(application: Application) : AndroidViewModel(application)
     fun updatePlaylistSettings(
         playlistId: Long,
         name: String,
+        url: String,
         epgUrl: String?,
         loadEpgNow: Boolean,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
-            repository.updatePlaylistSettings(playlistId, name, epgUrl)
+            repository.updatePlaylistSettings(playlistId, name, url, epgUrl)
             onSuccess()
             if (loadEpgNow && !epgUrl.isNullOrBlank()) {
                 refreshEpg(playlistId)
