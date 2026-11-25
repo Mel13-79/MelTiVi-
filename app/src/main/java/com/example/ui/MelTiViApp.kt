@@ -258,8 +258,8 @@ fun MelTiViApp(
                                     selectedTab = MainTab.CHANNELS
                                 },
                                 onRefreshPlaylist = viewModel::refreshPlaylist,
-                                onUpdatePlaylistSettings = { id, name, epgUrl, loadEpgNow, onSuccess ->
-                                    viewModel.updatePlaylistSettings(id, name, epgUrl, loadEpgNow, onSuccess)
+                                onUpdatePlaylistSettings = { id, name, url, epgUrl, loadEpgNow, onSuccess ->
+                                    viewModel.updatePlaylistSettings(id, name, url, epgUrl, loadEpgNow, onSuccess)
                                 },
                                 onDeletePlaylist = viewModel::deletePlaylist,
                                 onClearError = viewModel::clearError
@@ -376,10 +376,11 @@ fun MelTiViApp(
                     PlaylistSettingsDialog(
                         playlist = target,
                         onDismiss = { settingsTargetPlaylist = null },
-                        onSave = { newName, newEpgUrl, loadEpgNow ->
+                        onSave = { newName, newUrl, newEpgUrl, loadEpgNow ->
                             viewModel.updatePlaylistSettings(
                                 playlistId = target.id,
                                 name = newName,
+                                url = newUrl,
                                 epgUrl = newEpgUrl,
                                 loadEpgNow = loadEpgNow
                             ) {
