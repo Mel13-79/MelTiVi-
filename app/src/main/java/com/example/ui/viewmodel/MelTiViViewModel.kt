@@ -131,7 +131,16 @@ class MelTiViViewModel(application: Application) : AndroidViewModel(application)
     private val allEpgPrograms: StateFlow<List<EpgProgramEntity>> = activePlaylist
         .flatMapLatest { playlist ->
             if (playlist == null) flowOf(emptyList())
-            else repository.observeEpgPrograms(playlist.id)
+            else {
+                val startOfToday = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                val endOfTomorrow = startOfToday + 48 * 60 * 60 * 1000L
+                repository.observeEpgPrograms(playlist.id, startOfToday, endOfTomorrow)
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

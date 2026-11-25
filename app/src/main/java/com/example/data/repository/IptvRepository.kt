@@ -43,8 +43,8 @@ class IptvRepository(
     fun observeFavoriteChannels(playlistId: Long): Flow<List<ChannelEntity>> =
         dao.observeFavoriteChannels(playlistId)
 
-    fun observeEpgPrograms(playlistId: Long): Flow<List<EpgProgramEntity>> =
-        dao.observeEpgPrograms(playlistId)
+    fun observeEpgPrograms(playlistId: Long, startTimeMs: Long, endTimeMs: Long): Flow<List<EpgProgramEntity>> =
+        dao.observeEpgPrograms(playlistId, startTimeMs, endTimeMs)
 
     suspend fun getPlaylistById(playlistId: Long): PlaylistEntity? =
         dao.getPlaylistById(playlistId)

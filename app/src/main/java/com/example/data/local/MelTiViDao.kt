@@ -79,8 +79,8 @@ interface MelTiViDao {
 
     // --- Телегид (EPG) ---
 
-    @Query("SELECT * FROM epg_programs WHERE playlist_id = :playlistId ORDER BY start_time_ms ASC")
-    fun observeEpgPrograms(playlistId: Long): Flow<List<EpgProgramEntity>>
+    @Query("SELECT * FROM epg_programs WHERE playlist_id = :playlistId AND end_time_ms >= :startTimeMs AND start_time_ms <= :endTimeMs ORDER BY start_time_ms ASC")
+    fun observeEpgPrograms(playlistId: Long, startTimeMs: Long, endTimeMs: Long): Flow<List<EpgProgramEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEpgPrograms(programs: List<EpgProgramEntity>)
