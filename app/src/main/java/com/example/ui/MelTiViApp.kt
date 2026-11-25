@@ -229,6 +229,7 @@ fun MelTiViApp(
                                 currentTimeMs = currentTimeMs,
                                 isRefreshingEpg = isRefreshingEpg,
                                 epgLoadProgress = epgLoadProgress,
+                                epgUpdatedAt = activePlaylist?.epgUpdatedAt,
                                 onRefreshEpg = { viewModel.refreshEpg() },
                                 onOpenPlaylistSettings = { playlist ->
                                     settingsTargetPlaylist = playlist

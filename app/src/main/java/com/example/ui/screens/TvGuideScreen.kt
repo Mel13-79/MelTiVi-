@@ -88,7 +88,9 @@ import com.example.ui.theme.WarmOrangeSoft
 import com.example.ui.util.RussianFormatters
 import com.example.ui.viewmodel.EpgLoadProgress
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import kotlin.math.roundToInt
 
 /**
@@ -103,6 +105,7 @@ fun TvGuideScreen(
     currentTimeMs: Long,
     isRefreshingEpg: Boolean,
     epgLoadProgress: EpgLoadProgress?,
+    epgUpdatedAt: Long? = null,
     onRefreshEpg: () -> Unit,
     onOpenPlaylistSettings: (PlaylistEntity) -> Unit,
     onNavigateToPlaylists: () -> Unit,
@@ -276,6 +279,55 @@ fun TvGuideScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Компактная панель статуса обновления EPG (всегда видна)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (uiMode == AppUiMode.TvUi) 32.dp else 16.dp)
+        ) {
+            if (isRefreshingEpg) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LinearProgressIndicator(
+                        progress = { epgLoadProgress?.fraction ?: 0f },
+                        color = WarmOrange,
+                        trackColor = OutlineSubtle,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (epgLoadProgress != null && !epgLoadProgress.isIndeterminate) {
+                            val percent = (epgLoadProgress.fraction * 100f).roundToInt()
+                            "Обновление EPG... $percent%"
+                        } else {
+                            "Обновление EPG..."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val dateText = epgUpdatedAt?.let { ts ->
+                        val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm")
+                        "Обновлено: ${sdf.format(Date(ts))}"
+                    } ?: "Еще не обновлялось"
+                    Text(
+                        text = dateText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
         if (isRefreshingEpg && epgProgramsByChannel.isEmpty()) {
             EpgLoadingState(
                 progress = epgLoadProgress,
